@@ -1,0 +1,50 @@
+{
+  "name": "dsh-astral-summon",
+  "version": "1.0.0",
+  "description": "星穹召唤 · Astral Summon — an anime gacha card game plugin for DeepSeek Harness (dsh). Pull cards, then chat with the characters you own.",
+  "type": "module",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "client.js",
+    "rules.mjs",
+    "persona-prompt.mjs",
+    "personas",
+    "tavern",
+    "cordis.patch.yml",
+    "game",
+    "locale/*.json",
+    "icon.svg",
+    "README.md",
+    "CREDITS.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "dsh-plugin"
+  ],
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "dsh": {
+    "bundle": {
+      "patch": [
+        "./cordis.patch.yml"
+      ]
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-sidebar",
+        "@deepseek-ai/dsh-client-ui-layout"
+      ]
+    }
+  },
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
