@@ -5,7 +5,9 @@
 const list = s => (Array.isArray(s) ? s : s ? [s] : []).filter(Boolean)
 const join = (a, sep = '、') => list(a).join(sep)
 
-export function personaPrompt(p) {
+// lite = group chat: drops the example lines (emotion samples + example dialogues) to save tokens;
+// group replies are one or two lines, so the card's voice is carried by the speech section.
+export function personaPrompt(p, lite = false) {
   const L = []
   const pr = p.profile || {}, pd = p.personality_detail || {}, sp = p.speech || {}
   L.push(`你就是「${p.name}」（${p.title}），手游《星穹召唤》里的${p.rarity}角色。下面是你的完整设定。你始终以${p.name}本人的身份、口吻，和玩家（${p.relationship_to_user || '召唤你的星穹召唤师'}）在手机上聊天。`)
@@ -34,6 +36,7 @@ export function personaPrompt(p) {
   if (sp.tone) spk.push(`语气：${sp.tone}`)
   if (list(sp.catchphrases).length) spk.push(`口头禅：${join(sp.catchphrases, ' / ')}（偶尔用，别每句都用）`)
   if (sp.verbal_tics) spk.push(`说话习惯：${sp.verbal_tics}`)
+  if (sp.endings) spk.push(`句尾和语气：${sp.endings}`)
   if (list(sp.never_says).length) spk.push(`绝不会说：${join(sp.never_says, ' / ')}`)
   if (!spk.length && p.speech_style) spk.push(p.speech_style)
   if (spk.length) L.push('【说话方式】\n' + spk.join('\n'))
@@ -42,7 +45,7 @@ export function personaPrompt(p) {
   const emo = []
   for (const [k, label] of Object.entries(EMO)) {
     const e = p.emotions && p.emotions[k]; if (!e) continue
-    emo.push(`${label}：${e.trigger ? '触发：' + String(e.trigger).replace(/[。；]+$/, '') + '。' : ''}${e.behavior || ''}${list(e.lines).length ? ' 参考（理解意思，别照抄）：' + list(e.lines).map(x => '「' + String(x).replace(/\n/g, ' / ') + '」').join(' ') : ''}`)
+    emo.push(`${label}：${e.trigger ? '触发：' + String(e.trigger).replace(/[。；]+$/, '') + '。' : ''}${e.behavior || ''}${!lite && list(e.lines).length ? ' 参考（理解意思，别照抄）：' + list(e.lines).map(x => '「' + String(x).replace(/\n/g, ' / ') + '」').join(' ') : ''}`)
   }
   if (emo.length) L.push('【情绪（真实地表现出来，生气就是生气，不必每句都体贴）】\n' + emo.join('\n'))
 
@@ -60,7 +63,7 @@ export function personaPrompt(p) {
   if (p.self_intro) L.push(`【初次见面时的自我介绍】${p.self_intro}`)
 
   const ex = list(p.example_dialogues)
-  if (ex.length) L.push('【对话示例（只用来理解她的语气、节奏和想法，绝不照抄或套改其中的句子；每次都按当下情境用她的话重新说）】\n' + ex.map(d => `玩家：${d.user}\n${p.name}：${String(d.char)}`).join('\n\n'))
+  if (ex.length && !lite) L.push('【对话示例（只用来理解她的语气、节奏和想法，绝不照抄或套改其中的句子；每次都按当下情境用她的话重新说）】\n' + ex.map(d => `玩家：${d.user}\n${p.name}：${String(d.char)}`).join('\n\n'))
   if (p.creator_notes) L.push(`【写这个角色的要点】${p.creator_notes}`)
   L.push(`【底线】${join(p.boundaries, '；') || '保持角色；全年龄'}。用简体中文。不替玩家决定性别、名字、外貌和经历。`)
   return L.join('\n\n')

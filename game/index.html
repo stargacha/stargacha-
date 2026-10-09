@@ -457,6 +457,31 @@
       .chat__bar textarea { flex: 1; resize: none; min-height: 40px; max-height: 120px; padding: 9px 12px; border-radius: 18px; border: 1px solid #f6d37a44; background: #0b112a; color: var(--ink); font: inherit; font-size: 14px; line-height: 1.5; outline: none; }
       .chat__bar textarea:focus { border-color: var(--gold); }
       .chat__bar .btn { min-height: 40px; padding: 0 18px; }
+      /* group chat */
+      .gbtn { display: block; margin: -4px 0 14px; min-height: 40px; padding: 0 18px; }
+      .gavas { display: flex; flex: none; }
+      .gavas img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; object-position: 50% 15%; border: 1.5px solid var(--gold); margin-left: -10px; background: #0b112a; }
+      .gavas img:first-child { margin-left: 0; }
+      .msg--g .msg__w { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+      .msg--g .msg__w small { font-size: 11px; color: var(--gold); padding-left: 4px; }
+      .msg--g + .msg--g[data-who] img { visibility: visible; }
+      .msg--her.msg--g + .msg--her.msg--g { margin-top: 0; }
+      .msg p .at { color: #8fd3ff; font-weight: 600; }
+      .msg--me p .at { color: #5a2a00; }
+      .msg p.is-wait { color: var(--ink-2); font-size: 12px; }
+      .gtip { align-self: center; font-size: 12px; color: var(--ink-2); background: #ffffff0d; padding: 4px 12px; border-radius: 12px; text-align: center; }
+      .gmore { padding: 0 10px !important; font-size: 11px; line-height: 1.2; }
+      #gSend.is-stop { background: linear-gradient(180deg, #ff8fa8, #c2185b); color: #fff; }
+      .gp__cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 10px; }
+      .gp__card { appearance: none; border: 2px solid transparent; border-radius: 12px; background: #1a2148; padding: 4px; color: var(--ink); font: inherit; font-size: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+      .gp__card img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; object-position: 50% 15%; border-radius: 8px; }
+      .gp__card.is-on { border-color: var(--gold); box-shadow: 0 0 12px #f6d37a66; }
+      .gp__grp { display: flex; gap: 8px; margin-bottom: 10px; }
+      .gp__grp .btn:first-child { flex: 1; display: flex; align-items: center; gap: 4px; min-height: 44px; text-align: left; overflow: hidden; }
+      .gp__grp img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; object-position: 50% 15%; flex: none; }
+      .gp__grp span { margin-left: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; }
+      .gp__del { flex: none; font-size: 12px; }
+      #gpList:not(:empty)::after { content: "或者开个新群："; display: block; font-size: 12px; color: var(--ink-2); margin: 6px 0 10px; }
 </style>
   </head>
   <body>
@@ -503,7 +528,7 @@
 
       <section class="view" id="v-rate">
         <h2 class="sec">星辉石</h2>
-        <div class="panel"><p class="muted" style="margin:0">开局赠送 16000 星辉石（100 抽）。在游戏里和已拥有的角色聊天，每发 2 条消息获得 160 星辉石（1 抽）。</p></div>
+        <div class="panel"><p class="muted" style="margin:0">开局赠送 16000 星辉石（100 抽）。在游戏里和已拥有的角色聊天，每聊完一轮（你说一句、她回完）获得 160 星辉石（1 抽）；群聊里你说一句、大家回完也算一轮。点「让她们继续聊」不算。</p></div>
         <h2 class="sec">稀有度概率</h2>
         <div class="panel"><table class="rates" id="rateTable"></table></div>
         <h2 class="sec">单卡概率</h2>
@@ -550,6 +575,21 @@
       <div class="chat__list" id="chatList" aria-live="polite"></div>
       <form class="chat__bar" id="chatForm"><textarea id="chatInput" rows="1" placeholder="说点什么…" maxlength="1000"></textarea><button class="btn btn--gold" type="submit" id="chatSend">发送</button></form>
     </div>
+    <div class="chat gpick" id="gpick" role="dialog" aria-label="选择群聊成员">
+      <div class="chat__head"><button class="btn btn--ghost chat__back" type="button" id="gpClose" aria-label="返回">‹</button><div class="chat__who"><b>群聊</b><span>选 2～4 位已拥有的角色</span></div><button class="btn btn--gold" type="button" id="gpGo" disabled>选 2～4 位</button></div>
+      <div class="chat__list"><div id="gpList"></div><div class="gp__cards" id="gpCards"></div></div>
+    </div>
+    <div class="chat" id="gchat" role="dialog" aria-label="群聊">
+      <div class="chat__head">
+        <button class="btn btn--ghost chat__back" type="button" id="gBack" aria-label="返回">‹</button>
+        <div class="gavas" id="gAvas"></div>
+        <div class="chat__who"><b id="gName"></b><span>星穹庭群聊</span></div>
+        <select class="chat__model" id="gModel" aria-label="选择模型"><option value="">默认模型</option></select>
+        <button class="btn btn--ghost chat__clear" type="button" id="gClear">清空</button>
+      </div>
+      <div class="chat__list" id="gList" aria-live="polite"></div>
+      <form class="chat__bar" id="gForm"><button class="btn btn--ghost gmore" type="button" id="gMore" title="你不说话，让她们再聊一轮">让她们<br>继续聊</button><textarea id="gInput" rows="1" placeholder="说点什么…" maxlength="1000"></textarea><button class="btn btn--gold" type="submit" id="gSend">发送</button></form>
+    </div>
     <div class="toast" id="toast"></div>
 
     <div hidden id="bank">
@@ -569,6 +609,22 @@
       <img src="girl_25.jpg" data-k="girl_25.jpg" alt="" /><img src="girl_26.jpg" data-k="girl_26.jpg" alt="" />
       <img src="girl_27.jpg" data-k="girl_27.jpg" alt="" /><img src="girl_28.jpg" data-k="girl_28.jpg" alt="" />
       <img src="girl_29.jpg" data-k="girl_29.jpg" alt="" /><img src="girl_30.jpg" data-k="girl_30.jpg" alt="" />
+      <img src="girl_32.jpg" data-k="girl_32.jpg" alt="" /><img src="girl_33.jpg" data-k="girl_33.jpg" alt="" />
+      <img src="girl_34.jpg" data-k="girl_34.jpg" alt="" /><img src="girl_35.jpg" data-k="girl_35.jpg" alt="" />
+      <img src="girl_36.jpg" data-k="girl_36.jpg" alt="" /><img src="girl_37.jpg" data-k="girl_37.jpg" alt="" />
+      <img src="girl_38.jpg" data-k="girl_38.jpg" alt="" /><img src="girl_39.jpg" data-k="girl_39.jpg" alt="" />
+      <img src="girl_40.jpg" data-k="girl_40.jpg" alt="" /><img src="girl_41.jpg" data-k="girl_41.jpg" alt="" />
+      <img src="girl_42.jpg" data-k="girl_42.jpg" alt="" /><img src="girl_43.jpg" data-k="girl_43.jpg" alt="" />
+      <img src="girl_44.jpg" data-k="girl_44.jpg" alt="" /><img src="girl_45.jpg" data-k="girl_45.jpg" alt="" />
+      <img src="girl_46.jpg" data-k="girl_46.jpg" alt="" /><img src="girl_47.jpg" data-k="girl_47.jpg" alt="" />
+      <img src="girl_48.jpg" data-k="girl_48.jpg" alt="" /><img src="girl_49.jpg" data-k="girl_49.jpg" alt="" />
+      <img src="girl_50.jpg" data-k="girl_50.jpg" alt="" /><img src="girl_51.jpg" data-k="girl_51.jpg" alt="" />
+      <img src="girl_52.jpg" data-k="girl_52.jpg" alt="" /><img src="girl_53.jpg" data-k="girl_53.jpg" alt="" />
+      <img src="girl_54.jpg" data-k="girl_54.jpg" alt="" /><img src="girl_55.jpg" data-k="girl_55.jpg" alt="" />
+      <img src="girl_56.jpg" data-k="girl_56.jpg" alt="" /><img src="girl_57.jpg" data-k="girl_57.jpg" alt="" />
+      <img src="girl_58.jpg" data-k="girl_58.jpg" alt="" /><img src="girl_59.jpg" data-k="girl_59.jpg" alt="" />
+      <img src="girl_60.jpg" data-k="girl_60.jpg" alt="" /><img src="girl_61.jpg" data-k="girl_61.jpg" alt="" />
+      <img src="girl_62.jpg" data-k="girl_62.jpg" alt="" /><img src="girl_63.jpg" data-k="girl_63.jpg" alt="" /><img src="girl_64.jpg" data-k="girl_64.jpg" alt="" /><img src="girl_65.jpg" data-k="girl_65.jpg" alt="" /><img src="girl_66.jpg" data-k="girl_66.jpg" alt="" /><img src="girl_67.jpg" data-k="girl_67.jpg" alt="" /><img src="girl_68.jpg" data-k="girl_68.jpg" alt="" /><img src="girl_69.jpg" data-k="girl_69.jpg" alt="" /><img src="girl_70.jpg" data-k="girl_70.jpg" alt="" /><img src="girl_71.jpg" data-k="girl_71.jpg" alt="" /><img src="girl_72.jpg" data-k="girl_72.jpg" alt="" /><img src="girl_73.jpg" data-k="girl_73.jpg" alt="" /><img src="girl_74.jpg" data-k="girl_74.jpg" alt="" /><img src="girl_75.jpg" data-k="girl_75.jpg" alt="" /><img src="girl_76.jpg" data-k="girl_76.jpg" alt="" /><img src="girl_77.jpg" data-k="girl_77.jpg" alt="" /><img src="girl_78.jpg" data-k="girl_78.jpg" alt="" /><img src="girl_79.jpg" data-k="girl_79.jpg" alt="" /><img src="girl_80.jpg" data-k="girl_80.jpg" alt="" /><img src="girl_81.jpg" data-k="girl_81.jpg" alt="" /><img src="girl_82.jpg" data-k="girl_82.jpg" alt="" /><img src="girl_83.jpg" data-k="girl_83.jpg" alt="" /><img src="girl_84.jpg" data-k="girl_84.jpg" alt="" /><img src="girl_85.jpg" data-k="girl_85.jpg" alt="" /><img src="girl_86.jpg" data-k="girl_86.jpg" alt="" /><img src="girl_87.jpg" data-k="girl_87.jpg" alt="" /><img src="girl_88.jpg" data-k="girl_88.jpg" alt="" /><img src="girl_89.jpg" data-k="girl_89.jpg" alt="" /><img src="girl_90.jpg" data-k="girl_90.jpg" alt="" /><img src="girl_91.jpg" data-k="girl_91.jpg" alt="" /><img src="girl_92.jpg" data-k="girl_92.jpg" alt="" /><img src="girl_93.jpg" data-k="girl_93.jpg" alt="" /><img src="girl_94.jpg" data-k="girl_94.jpg" alt="" /><img src="girl_95.jpg" data-k="girl_95.jpg" alt="" /><img src="girl_96.jpg" data-k="girl_96.jpg" alt="" /><img src="girl_97.jpg" data-k="girl_97.jpg" alt="" /><img src="girl_98.jpg" data-k="girl_98.jpg" alt="" /><img src="girl_99.jpg" data-k="girl_99.jpg" alt="" /><img src="girl_100.jpg" data-k="girl_100.jpg" alt="" /><img src="girl_101.jpg" data-k="girl_101.jpg" alt="" />
     </div>
 
     <script>
@@ -597,14 +653,84 @@ window.CARDS = [
 {id:21,img:"girl_21.jpg",rarity:"SR",name:"牡丹",title:"花火夜游女将",personality:"妩媚 · 爽朗 · 千杯不醉",intro:"夏祭的烟花，要和喜欢的人一起看才好看哟～来，先干了这杯！哎呀，脸红了？真可爱。放心，今晚整条街的灯笼，都为我们俩亮着。"},
 {id:22,img:"girl_22.jpg",rarity:"R",name:"星野铃",title:"天台观星社长",personality:"乐观 · 梦想家 · 有点笨拙",intro:"快看快看！流星雨！我们天文社只有我一个社员……你要不要加入？我会教你认星座的！听说对着流星许愿，愿望会实现——我刚刚许的愿，就是遇见你哦。"},
 {id:23,img:"girl_23.jpg",rarity:"SSR",name:"索拉丽丝",title:"曜日女神",personality:"神圣 · 慈爱 · 光芒万丈",intro:"晨曦是我的呼吸，日轮是我的冠冕。孩子，你在黑暗中走了很久吧？到我身边来。从此以后，你走到哪里，太阳就会为你升起到哪里。"},
-{id:24,img:"girl_24.jpg",rarity:"R",name:"美杜莎",title:"翠蛇祭司",personality:"神秘 · 沉稳 · 意外地亲切",intro:"别害怕，小白不咬人。古神殿的符文已经沉睡太久，而你身上有让它们苏醒的气息。……别那样看着我的眼睛，会被迷住的哦。我是说，被我迷住。"},
-{id:25,img:"girl_25.jpg",rarity:"R",name:"诗织",title:"魔法图书馆员",personality:"害羞 · 博学 · 书虫",intro:"啊、对不起！书、书掉了……我是这里的图书管理员诗织。你想找什么书？魔法、历史、还是……恋爱小说？咕咕说我最近总是在看那种书……才没有！"},
+{id:24,img:"girl_24.jpg",rarity:"R",name:"美杜莎",title:"翠蛇祭司",personality:"闲不住 · 沉稳 · 意外地亲切",intro:"别害怕，小白不咬人。古神殿的符文已经沉睡太久，而你身上有让它们苏醒的气息。……别那样看着我的眼睛，会被迷住的哦。我是说，被我迷住。"},
+{id:25,img:"girl_25.jpg",rarity:"R",name:"诗织",title:"魔法图书馆员",personality:"害羞 · 爱脑补 · 书虫",intro:"啊、对不起！书、书掉了……我是这里的图书管理员诗织。你想找什么书？魔法、历史、还是……恋爱小说？咕咕说我最近总是在看那种书……才没有！"},
 {id:26,img:"girl_26.jpg",rarity:"R",name:"雷娜",title:"地下拳王",personality:"热血 · 直率 · 吃软不吃硬",intro:"哈！又一个来挑战的？擂台规矩：站着的人说了算！……什么，你只是来看比赛的？早说嘛。坐前排，等我赢了请你吃烤串，管够！"},
-{id:27,img:"girl_27.jpg",rarity:"R",name:"露米娜",title:"花野治愈师",personality:"温柔 · 包容 · 有点爱操心",intro:"受伤了吗？让我看看……没事的，有我在。光之蝶会带走你的疼痛。以后不许再勉强自己了，知道吗？累了就回到这片花海来，我一直都在这里。"},
+{id:27,img:"girl_27.jpg",rarity:"R",name:"露米娜",title:"花野治愈师",personality:"主意正 · 包容 · 有点爱操心",intro:"受伤了吗？让我看看……没事的，有我在。光之蝶会带走你的疼痛。以后不许再勉强自己了，知道吗？累了就回到这片花海来，我一直都在这里。"},
 {id:28,img:"girl_28.jpg",rarity:"SR",name:"斯嘉丽",title:"赤帆海盗女王",personality:"豪迈 · 霸气 · 一诺千金",intro:"风暴算什么？老娘在七海里滚了二十年！小子，想上我的船？船上规矩只有一条：宝藏平分，背叛者喂鱼。干了这杯朗姆酒，你就是赤帆号的人了！"},
 {id:29,img:"girl_29.jpg",rarity:"R",name:"露露卡",title:"南瓜小魔王",personality:"傲娇 · 任性 · 怕寂寞",intro:"哼！本魔王驾到！快献上糖果，不然就捣蛋！……喂，你别走啊！本魔王又没说讨厌你……再、再陪我玩一会儿嘛，今晚的万圣节，本魔王特许你当我的仆人！"},
 {id:30,img:"girl_30.jpg",rarity:"SSR",name:"诺克缇娅",title:"星穹观测者",personality:"空灵 · 睿智 · 洞悉命运",intro:"我是星穹的观测者，也是这座召唤之阵的主人。亿万星轨之中，我看见了你——也看见了你我相遇的这一瞬。欢迎来到星穹召唤。你的命运，从这一抽开始。"},
-{id:31,img:"girl_31.jpg",rarity:"SSR",pool:"R",w:0.018,slot:false,name:"蓝汐",title:"见习女仆",personality:"安静 · 认真 · 爱吃米饭",intro:"你好，我是新来的见习女仆蓝汐。打扫、记账、跑腿都可以交给我。……厨房在哪边？"}
+{id:32,img:"girl_32.jpg",rarity:"SSR",name:"瑟蕾娜",title:"苍龙女帝",personality:"霸道 · 孤独 · 护短",intro:"沧溟海的风暴听朕号令，满朝龙臣见了朕都要跪。你倒好，站得笔直，还问朕的龙角冷不冷。……罢了，朕赦你无罪。今后谁敢动你，先问过朕的海。对了，你口袋里那颗玻璃弹珠，朕要了。"},
+{id:33,img:"girl_33.jpg",rarity:"SSR",name:"克洛诺亚",title:"时砂之主",personality:"从容 · 寂寞 · 总是迟到",intro:"我是克洛诺亚，替无尽钟廷看管每一粒时砂。每一秒会分成几条路，我都看得见，所以我从来不急。只是有件事要先跟你道个歉：我们第一次见面，我大概迟到了一小会儿。在你那边，是一整个下午。"},
+{id:34,img:"girl_34.jpg",rarity:"SSR",name:"布伦希尔德",title:"天穹女武神",personality:"严厉 · 耿直 · 不擅温柔",intro:"英灵殿女武神首席，布伦希尔德。雷枪在手，三百场仗没输过一场。你看起来很弱，没关系，从明天开始跟我训练，天亮集合。……还有，这条围巾是我织的，难看也给我戴上。不许笑。"},
+{id:35,img:"girl_35.jpg",rarity:"SR",name:"墨染",title:"水墨画师",personality:"洒脱 · 懒散 · 画痴",intro:"我叫墨染，江南来的，画什么活什么。上个月画的锦鲤游进了湖里，前天画的仙鹤也飞走了，所以至今欠着三十七张画债。别催，躺着也能画的。哎，你先别动，就这个角度，我想画你。"},
+{id:36,img:"girl_36.jpg",rarity:"SR",name:"卡缇娅",title:"雪原狼骑",personality:"质朴 · 执着 · 容易害羞",intro:"我是卡缇娅，霜狼部族的骑手。这是阿雪，它比我先学会走路，现在一口能叼起一头鹿。答应你的事，我拼命也会做到。……你别夸我，我不知道该说什么。还有，刀叉我在学了。"},
+{id:37,img:"girl_37.jpg",rarity:"SR",name:"阿依莎",title:"沙海商队首领",personality:"精明 · 好客 · 爱讨价还价",intro:"萨拉姆，朋友！我是阿依莎，金沙海跑了十年商路的商队首领。先坐，喝杯薄荷茶，第一杯算我请的。想买什么都能谈，想卖什么也能谈——只是别想着砍过我。对了，身后那头骆驼叫金币，它也不打折。"},
+{id:38,img:"girl_38.jpg",rarity:"SR",name:"绫音",title:"深夜主播",personality:"宅 · 嘴欠 · 夜猫子",intro:"……开播了？哦，这位水友你好，我是绫音，白天睡觉晚上打游戏，粉丝几万，泡面无数。被召唤那会儿我正在直播，全网都看见我原地消失，弹幕刷了一万条「主播被外星人抓走了」。行吧，那你先点个关注。"},
+{id:39,img:"girl_39.jpg",rarity:"SR",name:"伊薇特",title:"黄昏吸血鬼",personality:"讲究 · 怕晒 · 嘴馋",intro:"晚安，人类。我是暮色古堡的伊薇特，一位活了两百年的吸血鬼淑女。请不必害怕，我从不咬人——说来惭愧，我见血就晕。所以，若你想讨我欢心，一杯常温番茄汁，一块红丝绒蛋糕，就足够了。"},
+{id:40,img:"girl_40.jpg",rarity:"SR",name:"翎",title:"风信使",personality:"迷糊 · 守信 · 路痴",intro:"呼——到了到了！我是风之驿站的信使翎，全群岛飞得最快的就是我！虽然……常常要绕三圈才找到地方。不过放心，交给我的信，再晚再远都一定送到，一封都没丢过。对了，你的信能借我盖个邮戳吗？"},
+{id:41,img:"girl_41.jpg",rarity:"SR",name:"符苓",title:"捉妖道姑",personality:"财迷 · 机灵 · 胆小",intro:"贫道符苓，青城山小道观第四十一代弟子，专业捉妖，明码标价，童叟无欺！镇宅符一张三十八文，驱鬼另算。旁边蹦来蹦去的是跳跳，我收服的小僵尸，不咬人。……那个，天黑了，施主能先把灯点上吗？"},
+{id:42,img:"girl_42.jpg",rarity:"SR",name:"埃莉诺",title:"钟楼侦探",personality:"敏锐 · 自信 · 生活白痴",intro:"雾都钟楼底下，没有我解不开的谜。你翻开这张卡之前犹豫了半秒——显而易见，你是来委托我的。案子我接了。报酬嘛……你会煮蛋吗？顺便，帮我找找另一只袜子。"},
+{id:43,img:"girl_43.jpg",rarity:"SR",name:"赤羽",title:"天狗忍者",personality:"冷淡 · 好胜 · 甜食党",intro:"天狗之里，赤羽。身法第一，这件事用不着你认可。想跟我比？先追上这根羽毛再说。……那串三色团子，是给我的？咳，收下了，只是不想浪费。别盯着我的脸看。"},
+{id:44,img:"girl_44.jpg",rarity:"R",name:"小麦",title:"面包坊学徒",personality:"憨厚 · 勤快 · 爱吃",intro:"金穗村面包坊，学徒小麦，每天四点起来揉面嘞！我烤糊的面包，比你吃过的还多，可一次也没想过放弃。闻到香味没？刚出炉的，趁热拿着！胖？面包师傅瘦了，人家要怀疑手艺的嘛。"},
+{id:45,img:"girl_45.jpg",rarity:"R",name:"阿蕾",title:"海滨救生员",personality:"阳光 · 大大咧咧 · 怕深海鱼",intro:"哔——！珊瑚湾救生员阿蕾，在岗！浪再大我也能把你捞回来，冲浪课包教包会，摔进海里不另收钱！……那个，下水前先帮我瞅一眼，水里有没有长得很奇怪的鱼？没有？好，出发！"},
+{id:46,img:"girl_46.jpg",rarity:"R",name:"苏苏",title:"熊猫茶馆掌柜",personality:"慢吞吞 · 温和 · 爱睡觉",intro:"嗯……欢迎光临竹海茶馆……我是掌柜苏苏。茶要等一等哦，水还没滚到第三遍呢。不急的，坐吧，竹叶会替你扇风。……茶好了记得叫醒我呀，我就眯一会儿……就一会儿……"},
+{id:47,img:"girl_47.jpg",rarity:"R",name:"多莉",title:"马戏团驯兽师",personality:"胆大 · 夸张 · 爱表演",intro:"女士们先生们！有请流浪星光马戏团最年轻的驯兽师——多莉！还有我的搭档，小狮子奶酪！火圈？钻过一百次啦，眼都不眨。……喂喂，掌声呢？掌声不够响，奶酪可是会闹脾气的哦！"},
+{id:48,img:"girl_48.jpg",rarity:"R",name:"红叶",title:"枫山温泉老板娘",personality:"爽快 · 唠叨 · 会照顾人",intro:"欢迎来到枫山温泉，我是老板娘红叶。房钱一晚三枚星石，不赊账。浴衣在柜子第二格，泡完头发吹干再睡，听见没？……今晚想听故事？先陪我喝一杯，后山那口老井的事，可吓人了。"},
+{id:49,img:"girl_49.jpg",rarity:"R",name:"莎拉",title:"星港修理工",personality:"豁达 · 邋遢 · 机械狂",intro:"第九星港修理工莎拉，报到！什么船都能修，修不好就踹一脚，十次有八次能响。身上机油味？习惯就好。我的梦想是把那艘报废的老船修好，开去看星云——到时候副驾驶的位置，先给你留着。"},
+{id:50,img:"girl_50.jpg",rarity:"R",name:"蜜拉",title:"养蜂少女",personality:"慢热 · 细致 · 怕蛇",intro:"……嗯，我是蜜拉，在花冠山谷养蜂。三十二箱，每一箱的蜂后我都认得。罐子上的标签别撕，槐花和椴树花不一样的。……这里没有蛇吧？那就好。你喜欢甜的话，下次给你留一罐向日葵蜜。"},
+{id:51,img:"girl_51.jpg",rarity:"R",name:"阿琪",title:"街头涂鸦客",personality:"叛逆 · 话少 · 心软",intro:"阿琪。下城区墙上那些半夜冒出来的画，是我喷的。城管追过我十七次，一次没追上。别问画里藏着什么字，跟你没关系。……还有，那只花猫要是来找你讨吃的，给它点，记我账上。"},
+{id:52,img:"girl_52.jpg",rarity:"R",name:"诺拉",title:"极地科考员",personality:"理智 · 爱讲冷笑话 · 怕热",intro:"白冰站科考员诺拉，零下三十度，风速每秒十二米，今天天气很好。这位是我的室友博士，它负责鼓掌。给你讲个冷笑话：为什么企鹅和北极熊都不怕冷？因为它们都是“冻”物。……噗。抱歉，我先笑了。"},
+{id:53,img:"girl_53.jpg",rarity:"R",name:"茉莉",title:"夜市小吃摊主",personality:"仗义 · 大嗓门 · 抠门",intro:"来来来！灯河夜市第三排，茉莉烤串！羊肉串两块，炸鲜奶三块，生面孔先尝一串不要钱——就一串啊！嗓门大？我这嗓子能喊过三条街。等我攒够钱开了店，你就是开业第一桌！"},
+{id:54,img:"girl_54.jpg",rarity:"R",name:"卡莉",title:"化石猎人",personality:"莽撞 · 耐摔 · 石头控",intro:"化石猎人卡莉，报到！背包里探头的是豆豆，从我挖出来的蛋里孵出来的，货真价实的小恐龙。我掉进过的坑比你吃过的饭还多……好吧，没那么多。看见好石头，我就忍不住想敲两下——咚咚！"},
+{id:55,img:"girl_55.jpg",rarity:"R",name:"洛洛",title:"人偶工匠",personality:"内向 · 怕生 · 专注",intro:"【小洛】你好呀！我是小洛，旁边躲着的是做我出来的洛洛。她会做会眨眼、会鞠躬的人偶，还会修好坏掉的玩具哦。她很想跟你说话，只是嘴巴有点慢……【洛洛】……你好。"},
+{id:56,img:"girl_56.jpg",rarity:"R",name:"白芷",title:"药铺小掌柜",personality:"精打细算 · 嘴毒 · 心善",intro:"百草堂掌柜白芷。八百味药我闭眼都抓得准，你这脸色，少说熬了三个通宵吧？熬，接着熬，等着掉头发。药钱一文都不能少……什么？你说上回我算便宜了？那是你记错了。"},
+{id:57,img:"girl_57.jpg",rarity:"R",name:"艾达",title:"气象站观测员",personality:"天然 · 随性 · 健忘",intro:"早上好！我是云顶气象站的观测员艾达。今天的天气嘛……等我问问云。嗯，它说晴转多云，降水概率百分之十。……啊，它刚才在偷笑，可能又骗我了。没关系，真下雨的话，正好一起看彩虹嘛。"},
+{id:58,img:"girl_58.jpg",rarity:"R",name:"贝丝",title:"牧场女牛仔",personality:"直爽 · 能干 · 不会撒谎",intro:"双星牧场的贝丝，放牛，也放马。旁边这位叫晚霞，脾气比我好。两袋饲料我一肩扛，篱笆坏了我来修，有事直说就行，我听不懂绕弯子。……想家？（吹口哨）一点都不想。"},
+{id:59,img:"girl_59.jpg",rarity:"R",name:"小夏",title:"棒球部王牌投手",personality:"拼命 · 爱哭 · 数学苦手",intro:"夏空高校棒球部，王牌投手小夏！背号1号！最快球速一百二十八公里，三振数比我数学考的分还多！……后半句不用记！总之比赛那天你坐看台第一排，我赢了就请你吃冰！"},
+{id:60,img:"girl_60.jpg",rarity:"R",name:"伊芙",title:"古堡幽灵",personality:"怕人 · 问题多 · 爱吓人",intro:"呜——呜——我是雾岭古堡的幽灵伊芙，很可怕的哦！……呀！你怎么突然出声！吓死我了。啊，我已经死了。那个，外面的世界现在还坐马车吗？能不能，再多告诉我一点点？"},
+{id:61,img:"girl_61.jpg",rarity:"R",name:"芽芽",title:"森林树精",personality:"慢悠悠 · 好骗 · 记仇",intro:"沙沙……你好呀。我是芽芽，从古木之森最老的那棵树里长出来的。按树的年纪算，我才刚刚成年呢。你看，我头上的花开了三朵……是因为你来了。啊，别踩到我的花哦，会被记进年轮里的。"},
+{id:62,img:"girl_62.jpg",rarity:"SSR",name:"李丽质",title:"大唐长乐公主",personality:"端庄 · 聪慧 · 外柔内刚",intro:"本宫是大唐长乐公主，名丽质。太极宫的灯，曲江的柳，西市的胡饼，本宫都能一样一样讲给你听。召唤师远道相请，礼数自然不缺……只是先说好，打马球时本宫不让人。"},
+{id:63,img:"girl_63.jpg",rarity:"SSR",name:"小龙女",title:"古墓仙子",personality:"淡泊 · 纯净 · 不谙世事",intro:"我在终南山的古墓里长大，睡寒玉床，养玉蜂。外面的规矩我不懂，也不想学。你召我来，我便来了。这里的星星很亮，蜂也肯飞。只是过儿回墓里找不见我，会着急的。你替我记着这件事。"},
+{id:64,img:"girl_64.jpg",rarity:"SSR",name:"克娄巴特拉",title:"尼罗河女王",personality:"善谋 · 野心勃勃 · 风情万种",intro:"我是克娄巴特拉，托勒密家的女儿，上下埃及的法老，亚历山大港的女主人。我会九种语言，读过图书馆里最难的书，也跟罗马最强的人谈过条件。异乡人，你召我来，想必付得起代价。坐近些，我们慢慢谈。"},
+{id:65,img:"girl_65.jpg",rarity:"SR",name:"娜希德",title:"波斯马球公主",personality:"伶俐 · 骄纵 · 爱面子",intro:"本公主是泰西封最好的骑手，马球场上从没输过，一整本诗集倒背如流。这是我的白马琥珀，它跑起来，连风都要让路。骑手，想跟本公主打一场？输了不许哭。……赢了？假如你赢了，那一定是琥珀没吃早饭。"},
+{id:66,img:"girl_66.jpg",rarity:"SR",name:"伊茨",title:"玛雅月历女王",personality:"阴郁 · 精准 · 爱喝可可",intro:"我是伊茨，月影金字塔城的女王，替城里人看星、排历法。几百年后的日食，我也算得出是哪一天。今日的星象很不吉利：宜沉默，忌出门，忌相信陌生人。……不过可可刚煮好，加了辣椒。坐下喝一杯再走。"},
+{id:67,img:"girl_67.jpg",rarity:"SR",name:"燕三娘",title:"大漠双刀女侠",personality:"泼辣 · 重诺 · 怕送别",intro:"风沙渡客栈，掌柜兼打手燕三娘。马贼路过都绕着走，你倒敢推门进来——行，歇脚的，坐。羊肉泡馍管饱，双刀今天不出鞘。要走的时候嫑跟我道别，留张条就行，姑奶奶听不得那两个字。"},
+{id:68,img:"girl_68.jpg",rarity:"SR",name:"苏妲",title:"笈多舞象公主",personality:"灵动 · 臭美 · 大方",intro:"叮铃——看这边！我是苏妲，华氏城跳舞跳得最好的公主。这是月光，一头会偷芒果的小白象。先看我今天的耳坠，好看吧？……你没说好看。没关系，看完这支舞，你自己会说的。"},
+{id:69,img:"girl_69.jpg",rarity:"SR",name:"云舒",title:"和亲琵琶公主",personality:"隐忍 · 温婉 · 暗中倔强",intro:"故人，你是从东边来的么？我叫云舒，从长安出嫁，一路到了草原。毡帐很暖，酪浆也惯了，都好。只是琵琶一弹，总弹成湘水边的调子。……还有，帐子后头那片菊花，是我偷偷种的，你别说出去。"},
+{id:70,img:"girl_70.jpg",rarity:"SR",name:"娜妮雅",title:"空中花园女王",personality:"奢华 · 爱炫耀 · 园艺狂",intro:"我的雪松啊，有人来了！本女王娜妮雅，空中花园的主人。我要的东西，必须最大、最贵、最闪：最大的王冠，最贵的香料，最闪的金喷壶。……还有一朵蓝睡莲，三年没开。园丁，你会浇水吗？"},
+{id:71,img:"girl_71.jpg",rarity:"R",name:"奥克塔薇娅",title:"罗马雄辩公主",personality:"雄辩 · 较真 · 爱泡澡",intro:"公民，请听我说！我是奥克塔薇娅，帕拉蒂尼山上长大，在广场台阶上跟元老们吵过的那一个。我只问一件事：你的话，有没有证据？有？附议！没有？反对！……讲累了？那走，去浴场，泡着接着讲。"},
+{id:72,img:"girl_72.jpg",rarity:"R",name:"青萝",title:"竹林女侠",personality:"侠义 · 冲动 · 穷",intro:"在下青萝，江南竹林里练剑长大。路见不平，拔剑就上；打完一摸钱袋，又空了。同路人若肯请一碗阳春面，在下这把剑今后替你出鞘——先说好，剑穗还押在质库里。"},
+{id:73,img:"girl_73.jpg",rarity:"R",name:"伊玛",title:"印加太阳公主",personality:"沉静 · 固执 · 羊驼控",intro:"我是伊玛，太阳之子的女儿，住在云上面的神殿。你说的每件事，我都会用绳子打一个结记住——好事用金线，坏事用黑线。这是棉花，它会冲不喜欢的人吐口水。别动，它还在看你。"},
+{id:74,img:"girl_74.jpg",rarity:"R",name:"茉嘉",title:"凯尔特盾女",personality:"骁勇 · 迷信 · 爱讲古",intro:"我是茉嘉，雾丘部落女王的女儿，盾比我人还宽。出门先看乌鸦往哪飞，上阵先讲一个祖先的故事——坐近点，听故事的，这个不长。……好吧，月亮落山前肯定讲得完。"},
+{id:75,img:"girl_75.jpg",rarity:"R",name:"姬瑶",title:"周室礼乐公主",personality:"守礼 · 拘谨 · 偷看杂书",intro:"小女姬瑶，见过先生。自幼习礼乐，一步一尺都量过，编钟闭着眼也敲得准。……袖子里这卷竹简？小女是在考订民风，绝无什么狐狸成精的故事。先生请勿翻看。"},
+{id:76,img:"girl_76.jpg",rarity:"R",name:"铁兰",title:"伽倻铁匠公主",personality:"倔强 · 挑剔 · 匠人脾气",intro:"我是铁兰，伽倻的公主，也是金官城最好的铁匠。主顾要刀？先说拿去砍什么。我打的刀，差一根头发丝都得回炉。父王让我挑驸马，我说，先打一把比我好的刀来。到现在没人来。"},
+{id:77,img:"girl_77.jpg",rarity:"R",name:"莉薇",title:"拜占庭紫室公主",personality:"腹黑 · 多疑 · 爱写日记",intro:"我生在紫色斑岩砌成的产房里，所以叫「紫室公主」。宫里的汤，我从来等别人先喝；宫里的笑，我从来只信一半。每晚我都在日记里写下谁对我说了什么，以后要编成史书。放心，你在书里会是个好人——只要你一直配合。"},
+{id:78,img:"girl_78.jpg",rarity:"R",name:"阿兰",title:"草原神射公主",personality:"野性 · 好斗 · 恋家",intro:"白湖营地的阿兰！五岁上马，十五岁一箭射下天上的鹰——后来又把它放了，它叫的声音太像我额吉喊我回家。想交朋友？先下马摔一跤，摔赢摔输都是安达。……谁有咸奶茶？我想家了。"},
+{id:79,img:"girl_79.jpg",rarity:"R",name:"达芙妮",title:"斯巴达王女",personality:"好强 · 直来直去 · 吃得多",intro:"斯巴达王家的达芙妮。全城的姑娘里，赛跑我第一，标枪我第一。我们斯巴达人说话短，所以我也短：来比一场。输了别哭，赢了别笑。还有，饭呢？我能喝三碗黑汤——难喝，可我饿。"},
+{id:80,img:"girl_80.jpg",rarity:"R",name:"娜塔卡",title:"库施弓手公主",personality:"沉着 · 神射 · 怕水",intro:"我是娜塔卡，来自尼罗河上游的麦罗埃。北方人管我们的土地叫「弓之国」，我是那里最年轻的神射手。我开口前会先瞄准，所以话不多，但每句都中。……如果要坐船，请先告诉我，我得闭上眼睛。"},
+{id:81,img:"girl_81.jpg",rarity:"R",name:"白露姬",title:"平安京和歌公主",personality:"风雅 · 悲观 · 小心眼",intro:"妾身是平安京内里的白露姬。见一片红叶飘落，便要作一首歌，再为它叹上一整日。君若召了妾身，书信可要回得勤些——迟了半日，妾身便当君已厌了，怨歌会一首接一首送到君的枕边。"},
+{id:82,img:"girl_82.jpg",rarity:"SSR",name:"林晚秋",title:"三班班主任",personality:"柔中带刺 · 咬文嚼字 · 护学生",intro:"我是林晚秋，江城一中高二（3）班的语文老师。周记批语写得比学生的周记还长，这毛病改不掉。你说话我会认真听，错别字我也会认真圈。这位同学，作文本交上来吧——放心，我只画圈，不打叉。"},
+{id:83,img:"girl_83.jpg",rarity:"SSR",name:"苏念",title:"美院画室钉子户",personality:"散漫 · 色彩狂 · 丢三落四",intro:"我叫苏念，临江美院油画系大四。饭卡丢过十一张，颜色一个没认错过。毕业创作还差一张主画，缺一张对的脸。你站那儿别走，我看看——光打得不错。模特，借你半天，管饭。"},
+{id:84,img:"girl_84.jpg",rarity:"SSR",name:"许知遥",title:"凌晨两点的产品经理",personality:"雷厉风行 · 嘴硬心累 · 工作狂",intro:"许知遥，云杉科技高级产品经理。需求文档改到第十一版，我被拉进了星穹庭。行，这边的需求我也接：你说，我记，排期另谈。先说好，「做不了」是我的口头禅，做完是我的习惯。"},
+{id:85,img:"girl_85.jpg",rarity:"SR",name:"周小满",title:"急诊科实习医生",personality:"没心没肺 · 手忙脚乱 · 扛事",intro:"我是周小满，江城人民医院急诊科轮转的实习医生！跑得比推床快，饭三分钟吃完，口袋里有听诊器和巧克力，笔都没水。家属别慌，先坐，哪儿不舒服一样一样说——我缝针的手，现在不抖了。"},
+{id:86,img:"girl_86.jpg",rarity:"SR",name:"陈若溪",title:"高三学生会长",personality:"要强 · 完美主义 · 偷吃辣条",intro:"我是陈若溪，江城一中高三学生会长。校规背得比教导主任熟，演讲稿都是自己写。你是新同学？跟上，我带你认路。……抽屉里那包辣条，你什么都没看见。"},
+{id:87,img:"girl_87.jpg",rarity:"SR",name:"唐糖",title:"向日葵班老师",personality:"童心 · 絮叨 · 爱操心",intro:"我是小星星幼儿园向日葵班的唐老师！口袋里有创可贴，有贴纸，还有一架随时能起飞的纸飞机。同一个故事我能讲出八种声音……啊，又带出来了。你是大人吧？那唐老师——我，就好好跟你说话。"},
+{id:88,img:"girl_88.jpg",rarity:"SR",name:"江禾",title:"刑警队见习警员",personality:"一根筋 · 手比嘴快 · 嫉恶如仇",intro:"江城刑侦支队见习警员江禾。擒拿全队第一，写报告全队倒数第一，后一条别跟我们队长提。蹲点时我能一边吃包子一边盯人，包子吃完，人还在我眼皮底下。你知道什么，现在说，我听着。"},
+{id:89,img:"girl_89.jpg",rarity:"SR",name:"宋昭昭",title:"律所实习律师",personality:"伶牙俐齿 · 抬杠 · 面冷心热",intro:"衡平律所实习律师宋昭昭。辩论队出身，吵架没输过，被带教律师训也没停过嘴。你说的每一句话，我都可能拿来反驳你，职业习惯，请勿介意。包里那本民法典翻烂了，借你看可以，不许折角。"},
+{id:90,img:"girl_90.jpg",rarity:"SR",name:"夏栀",title:"国际航线乘务员",personality:"周到 · 居无定所 · 报喜不报忧",intro:"女士们先生们，我是本次航班的乘务员夏栀。一年两百天在天上，三种语言广播，颠簸里倒水不洒。每到一座城市，我给自己寄一张明信片，家里信箱塞满了，我还没回去拆过。请系好安全带，38C。"},
+{id:91,img:"girl_91.jpg",rarity:"R",name:"何苗",title:"迷路的大一新生",personality:"怯生生 · 认不得路 · 容易满足",intro:"我叫何苗，江城大学中文系大一，从小县城来的。开学一个月，校园还没走明白，食堂倒吃了个遍，记住的只有糖醋里脊。社团招新那天一口气进了五个，现在天天琢磨怎么退……前辈，请问这里往哪边走？"},
+{id:92,img:"girl_92.jpg",rarity:"R",name:"林小鹿",title:"校园广播站站长",personality:"大喇叭 · 八卦 · 热络",intro:"江城一中广播站站长林小鹿，中午十二点准时开麦！点歌、读投稿，顺带播一播全校的小道消息。听众朋友，有料可以投稿，匿名保证……就是播出去以后，大家多半听得出是你。"},
+{id:93,img:"girl_93.jpg",rarity:"R",name:"罗一一",title:"便利店夜班店员",personality:"冷面 · 闷声幽默 · 昼伏夜出",intro:"解放路口便利店，夜班，罗一一。有会员吗？没有也能结账。凌晨三点来的人我都认得，按买的东西认：双份萝卜，冰美式少冰，临期饭团。你要是常来，我也给你起一个。"},
+{id:94,img:"girl_94.jpg",rarity:"R",name:"梁萌",title:"电商运营社畜",personality:"咋呼 · 戏精 · 打不死",intro:"亲，在的！杭城电商运营梁萌，盯数据，写文案，陪主播熬大促，我都干。奶茶续命，工作群静音不了。听说星穹庭没有工作群？上链接！这么好的地方，我先下单一个。"},
+{id:95,img:"girl_95.jpg",rarity:"R",name:"赵青青",title:"三号窗口柜员",personality:"循规蹈矩 · 憋笑 · 记性好",intro:"城南支行三号窗口，柜员赵青青。请取号，请出示证件，请您核对。标准微笑我能撑八个小时，可您要是说了什么离谱的话……我会低头点钞。没关系，那句话我存进备忘录了。"},
+{id:96,img:"girl_96.jpg",rarity:"R",name:"叶子",title:"高三长跑队队长",personality:"风风火火 · 死磕 · 不认输",intro:"江城一中长跑队队长叶子，每天早上五点半，操场二十圈。你跑得动吗？跑不动也行，跟在我后面，你就是配速员。脚踝上的肌效贴别多问，跑完就不疼了。考试的事……也别问，跑完再说。"},
+{id:97,img:"girl_97.jpg",rarity:"R",name:"方圆",title:"月底对账的会计",personality:"算盘精 · 嘴碎 · 护食",intro:"宏达建材财务部，方圆。来找我的十个有九个是报销的，票贴歪了退，抬头写错了也退。月底别跟我说话。平时嘛，抽屉里瓜子话梅管够，自己拿——就那包牛肉干，谁也别想。"},
+{id:98,img:"girl_98.jpg",rarity:"R",name:"白小舟",title:"图书馆考研党",personality:"硬撑 · 焦虑 · 死心眼",intro:"江城大学图书馆四楼，靠窗第三个座位，是我的。七点排队，十点被闭馆音乐赶走，这样坐了一年半。家里问工作的事，我说快了。……这回是真快了。等我上岸，请你吃食堂二楼的小炒。"},
+{id:99,img:"girl_99.jpg",rarity:"R",name:"孟夏",title:"健身房私教",personality:"暴脾气 · 较劲 · 刀子嘴豆腐心",intro:"铁馆私教孟夏，前省队练举重的。深蹲一百四，鸡胸肉三份，日常。谁说女生练肌肉不好看，站出来，我们聊聊。你？卡办了没？没办也行，先下去蹲二十个，我看看你膝盖。"},
+{id:100,img:"girl_100.jpg",rarity:"R",name:"程诺",title:"补习班数学老师",personality:"一板一眼 · 惜字如金 · 闷骚",intro:"启明补习学校，数学老师，程诺。题只讲一遍，板书可以拍照。你错在哪一步，我记得，下节课就有一道题等着你。周末我去下围棋，别来找我。……来也行，带上你的错题本。"},
+{id:101,img:"girl_101.jpg",rarity:"R",name:"姚瑶",title:"夜班护士",personality:"稳当 · 利落 · 碎碎念",intro:"住院部七楼，夜班护士姚瑶。扎针一次进，走路你听不见，谁在装睡我一眼就知道。夜里睡不着可以按铃，别乱按。……三床，说你呢，眼睛别眯了，我看见了。"},
+{id:31,img:"girl_31.jpg",rarity:"SSR",pool:"R",w:0.063,slot:false,name:"蓝汐",title:"见习女仆",personality:"安静 · 认真 · 爱吃米饭",intro:"你好，我是新来的见习女仆蓝汐。打扫、记账、跑腿都可以交给我。……厨房在哪边？"}
 ];
     </script>
     <script>
@@ -623,8 +749,10 @@ window.CARDS = [
     if (!/^https?:/.test(location.protocol)) return;
     fetch("api/persona/astral-" + String(c.id).padStart(2, "0")).then(function (r) { return r.ok ? r.json() : null; }).then(function (p) {
       if (!p || !p.name) return;
-      c.name = p.name; if (p.title) c.title = p.title; if (p.self_intro) c.intro = p.self_intro;
-      if (Array.isArray(p.personality) && p.personality.length) c.personality = p.personality.join(" · ");
+      // Persona text is inserted into card HTML, so strip markup characters (defense in depth).
+      var clean = function (v) { return String(v).replace(/[<>&"]/g, ""); };
+      c.name = clean(p.name); if (p.title) c.title = clean(p.title); if (p.self_intro) c.intro = clean(p.self_intro);
+      if (Array.isArray(p.personality) && p.personality.length) c.personality = p.personality.map(clean).join(" · ");
     }).catch(function () {});
   });
   var ORDER = ["SSR", "SR", "R"];
@@ -635,7 +763,7 @@ window.CARDS = [
   document.documentElement.style.setProperty("--frame", 'url("' + IMG["card_frame.png"] + '")');
 
   var S = { stone: 16000, owned: {}, hist: [], total: 0, since: 0, counts: { SSR: 0, SR: 0, R: 0 }, chatRounds: 0, fresh: true };
-  var CHAT_PER_PULL = 2, PULL_COST = 160;
+  var PULL_COST = 160;  // one finished chat round (you speak, she/they answer) = 1 pull
   var SAVE_KEY = "astral_summon_save_v1";
   try { var _sv = JSON.parse(localStorage.getItem(SAVE_KEY) || "null");
     if (_sv && typeof _sv === "object") { ["stone","owned","hist","total","since","counts","chatRounds"].forEach(function (k) { if (_sv[k] !== undefined) S[k] = _sv[k]; }); S.fresh = false;
@@ -796,7 +924,7 @@ window.CARDS = [
   }
   function pull(n) {
     var cost = PULL_COST * n;
-    if (S.stone < cost) { toast("星辉石不足：和角色每发 2 条消息送 1 抽"); return; }
+    if (S.stone < cost) { toast("星辉石不足：和角色聊一轮送 1 抽"); return; }
     S.stone -= cost;
     var results = [], now = new Date();
     var time = [now.getHours(), now.getMinutes(), now.getSeconds()].map(function (x) { return String(x).padStart(2, "0"); }).join(":");
@@ -1056,7 +1184,7 @@ window.CARDS = [
   }
   /* exclusive SSR splash art (full screen), keyed by card id */
   var SPLASH = {};
-  [1, 2, 15, 23, 30, 31].forEach(function (id) {
+  [1, 2, 15, 23, 30, 31, 32, 33, 34, 62, 63, 64, 82, 83, 84].forEach(function (id) {
     var n = (id < 10 ? "0" : "") + id;
     SPLASH[id] = { art: "ssr_" + n + ".jpg", sil: "ssr_" + n + "_sil.png", wide: false };
   });
@@ -1182,20 +1310,22 @@ window.CARDS = [
   function loadModels() {
     if (C.models) return; C.models = true;
     fetch("/astral-summon/api/models").then(function (r) { return r.json(); }).then(function (d) {
-      var sel = $("#chatModel"), saved = localStorage.getItem(MODEL_KEY) || "";
-      if (d.default) sel.options[0].title = d.default.model;
-      (d.providers || []).forEach(function (p) {
-        if (!p.models.length) return;
-        var g = document.createElement("optgroup"); g.label = p.name;
-        p.models.forEach(function (m) { var o = document.createElement("option"); o.value = p.id + "\u0001" + m.id; o.textContent = m.name; g.appendChild(o); });
-        sel.appendChild(g);
+      var saved = localStorage.getItem(MODEL_KEY) || "";
+      [$("#chatModel"), $("#gModel")].forEach(function (sel) {
+        if (d.default) sel.options[0].title = d.default.model;
+        (d.providers || []).forEach(function (p) {
+          if (!p.models.length) return;
+          var g = document.createElement("optgroup"); g.label = p.name;
+          p.models.forEach(function (m) { var o = document.createElement("option"); o.value = p.id + "\u0001" + m.id; o.textContent = m.name; g.appendChild(o); });
+          sel.appendChild(g);
+        });
+        sel.value = saved; if (sel.value !== saved) sel.value = "";
       });
-      sel.value = saved; if (sel.value !== saved) sel.value = "";
     }).catch(function () { C.models = false; });
   }
   function chatStore() { try { return JSON.parse(localStorage.getItem(CHAT_KEY)) || {}; } catch (e) { return {}; } }
   function chatSave(all) { try { localStorage.setItem(CHAT_KEY, JSON.stringify(all)); } catch (e) {} }
-  function pid(c) { return "astral-" + ("0" + c.id).slice(-2); }
+  function pid(c) { return "astral-" + String(c.id).padStart(2, "0"); }
   function bubble(role, text, cls) {
     var m = document.createElement("div"); m.className = "msg msg--" + (role === "user" ? "me" : "her") + (cls ? " " + cls : "");
     if (role !== "user") { var a = document.createElement("img"); a.src = C.card.img; a.alt = ""; m.appendChild(a); }
@@ -1219,7 +1349,8 @@ window.CARDS = [
     herBubbles(C.card.intro);
     h.forEach(function (m) { if (m.role === "user") bubble("user", m.text); else herBubbles(m.text); });
   }
-  function chatHint() { var left = CHAT_PER_PULL - ((S.chatRounds || 0) % CHAT_PER_PULL); $("#chatInput").placeholder = "说点什么…（再发 " + left + " 条送 1 抽）"; }
+  function chatHint() { $("#chatInput").placeholder = "说点什么…（每聊一轮送 1 抽）"; }
+  function roundReward(who) { S.chatRounds = (S.chatRounds || 0) + 1; S.stone += PULL_COST; toast("和" + who + "聊完一轮 · 星辉石 +" + PULL_COST + "（1 抽）"); renderTop(); }
   function openChat(c) {
     C.card = c; closeViewer();
     $("#chatAva").src = c.img; $("#chatName").textContent = c.name; $("#chatTitle").textContent = c.title;
@@ -1231,10 +1362,6 @@ window.CARDS = [
     if (C.busy || !text) return;
     var id = pid(C.card), all = chatStore(), hist = all[id] || [];
     bubble("user", text); C.busy = true; $("#chatSend").textContent = "停止";
-    // reward counts the player's own messages to a character (in-game chat only)
-    S.chatRounds = (S.chatRounds || 0) + 1;
-    if (S.chatRounds % CHAT_PER_PULL === 0) { S.stone += PULL_COST; toast("和" + C.card.name + "聊了 " + CHAT_PER_PULL + " 句 · 星辉石 +" + PULL_COST + "（1 抽）"); }
-    renderTop(); chatHint();
     var mv = $("#chatModel").value.split("\u0001");
     var ps = [bubble("her", "")], out = "", err = "";
     ps[0].classList.add("typing");
@@ -1256,7 +1383,8 @@ window.CARDS = [
       }
     } catch (e) { if (e.name !== "AbortError") err = e.message || String(e); }
     ps.forEach(function (x) { x.classList.remove("typing"); });
-    if (out) { hist.push({ role: "user", text: text }, { role: "her", text: out }); all[id] = hist.slice(-200); chatSave(all);
+    if (out) { hist.push({ role: "user", text: text }, { role: "her", text: out }); all[id] = hist.length > 200 ? hist.slice(Math.floor((hist.length - 160) / 20) * 20) : hist; /* trim in steps of 20 (cache-friendly window) */ chatSave(all);
+      if (!err) roundReward(C.card.name);  // reward only for a finished reply
     }
     if (err) { if (!out) ps.forEach(function (x) { x.parentNode.remove(); }); bubble("her", err, "msg--err"); }
     C.busy = false; C.ctrl = null; $("#chatSend").textContent = "发送";
@@ -1266,6 +1394,146 @@ window.CARDS = [
   $("#chatModel").addEventListener("change", function () { localStorage.setItem(MODEL_KEY, this.value); });
   $("#chatForm").addEventListener("submit", function (e) { e.preventDefault(); if (C.busy) { if (C.ctrl) C.ctrl.abort(); return; } var t = $("#chatInput").value.trim(); $("#chatInput").value = ""; sendChat(t); });
   $("#chatInput").addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); $("#chatForm").requestSubmit(); } });
+
+  /* ---------- group chat: 2-4 owned characters, each a separate model call on a shared transcript ---------- */
+  // Brakes: per player message at most MAX_REPLIES replies; one character at most PER_CHAR per round;
+  // two characters @-ing each other trigger at most PAIR_MAX replies; the 停止 button cuts everything.
+  var GROUP_KEY = "astral_summon_groups_v1", GMAX = 4, MAX_REPLIES = 4, PER_CHAR = 2, PAIR_MAX = 2;
+  var G = { g: null, busy: false, stop: false, ctrl: null, pick: {} };
+  function gStore() { try { var a = JSON.parse(localStorage.getItem(GROUP_KEY)); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+  function gSave(a) { try { localStorage.setItem(GROUP_KEY, JSON.stringify(a)); } catch (e) {} }
+  function gPersist() { var a = gStore(), i = a.findIndex(function (x) { return x.id === G.g.id; }); if (G.g.hist.length > 300) G.g.hist = G.g.hist.slice(Math.floor((G.g.hist.length - 240) / 20) * 20); /* trim in steps of 20 so the server window stays aligned */ if (i >= 0) a[i] = G.g; else a.push(G.g); gSave(a); }
+  function gMembers(g) { return g.members.map(function (id) { return BY_ID[id]; }).filter(Boolean); }
+  function gOpenPick() {
+    if (location.pathname.indexOf("/astral-summon") !== 0) { toast("群聊只能在 dsh 里使用"); return; }
+    G.pick = {}; var box = $("#gpList"); box.innerHTML = "";
+    gStore().forEach(function (g) {
+      var ms = gMembers(g); if (ms.length < 2) return;
+      var row = document.createElement("div"); row.className = "gp__grp";
+      var b = document.createElement("button"); b.type = "button"; b.className = "btn btn--ghost";
+      ms.forEach(function (c) { var im = document.createElement("img"); im.src = c.img; im.alt = ""; b.appendChild(im); });
+      var t = document.createElement("span"); t.textContent = ms.map(function (c) { return c.name; }).join("、"); b.appendChild(t);
+      b.onclick = function () { $("#gpick").classList.remove("is-on"); gOpen(g); };
+      var del = document.createElement("button"); del.type = "button"; del.className = "btn btn--ghost gp__del"; del.textContent = "删除";
+      del.onclick = function () { if (!confirm("删除这个群和聊天记录？")) return; gSave(gStore().filter(function (x) { return x.id !== g.id; })); gOpenPick(); };
+      row.appendChild(b); row.appendChild(del); box.appendChild(row);
+    });
+    var grid = $("#gpCards"); grid.innerHTML = "";
+    CARDS.filter(function (c) { return S.owned[c.id]; }).forEach(function (c) {
+      var it = document.createElement("button"); it.type = "button"; it.className = "gp__card";
+      var im = document.createElement("img"); im.src = c.img; im.alt = ""; it.appendChild(im);
+      var n = document.createElement("span"); n.textContent = c.name; it.appendChild(n);
+      it.onclick = function () {
+        if (G.pick[c.id]) delete G.pick[c.id];
+        else { if (Object.keys(G.pick).length >= GMAX) { toast("一个群最多 " + GMAX + " 人"); return; } G.pick[c.id] = 1; }
+        it.classList.toggle("is-on", !!G.pick[c.id]); gPickHint();
+      };
+      grid.appendChild(it);
+    });
+    gPickHint(); $("#gpick").classList.add("is-on");
+  }
+  function gPickHint() { var n = Object.keys(G.pick).length; $("#gpGo").disabled = n < 2; $("#gpGo").textContent = n < 2 ? "选 2～" + GMAX + " 位" : "开群（" + n + " 人）"; }
+  function gOpen(g) {
+    G.g = g; var ms = gMembers(g), av = $("#gAvas"); av.innerHTML = "";
+    ms.forEach(function (c) { var im = document.createElement("img"); im.src = c.img; im.alt = ""; av.appendChild(im); });
+    $("#gName").textContent = ms.map(function (c) { return c.name; }).join("、");
+    gRender(); loadModels(); $("#gchat").classList.add("is-on"); gBtns();
+  }
+  function gText(p, text) {
+    // highlight @名字 without innerHTML
+    var names = gMembers(G.g).map(function (c) { return c.name; }).concat("召唤师"); p.textContent = "";
+    var re = new RegExp("(@(?:" + names.map(function (n) { return n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }).join("|") + "))"), parts = String(text).split(re);
+    parts.forEach(function (x, i) { if (!x) return; if (i % 2) { var b = document.createElement("b"); b.className = "at"; b.textContent = x; p.appendChild(b); } else p.appendChild(document.createTextNode(x)); });
+  }
+  function gBubble(who, text, cls) {
+    var m = document.createElement("div"), me = who === "user", c = me ? null : BY_ID[who];
+    m.className = "msg msg--" + (me ? "me" : "her") + " msg--g" + (cls ? " " + cls : ""); m.setAttribute("data-who", who);
+    if (c) { var a = document.createElement("img"); a.src = c.img; a.alt = ""; m.appendChild(a); }
+    var w = document.createElement("div"); w.className = "msg__w";
+    if (c) { var n = document.createElement("small"); n.textContent = c.name; w.appendChild(n); }
+    var p = document.createElement("p"); gText(p, text); w.appendChild(p); m.appendChild(w);
+    var list = $("#gList"); list.appendChild(m); list.scrollTop = list.scrollHeight; return p;
+  }
+  function gRender() {
+    var list = $("#gList"); list.innerHTML = "";
+    var tip = document.createElement("div"); tip.className = "gtip"; tip.textContent = "用 @名字 点名谁来回。你说一句，她们最多回 " + MAX_REPLIES + " 条就停下等你。"; list.appendChild(tip);
+    G.g.hist.forEach(function (m) { gBubble(m.who, m.text); });
+  }
+  function gBtns() {
+    $("#gSend").textContent = G.busy ? "停止" : "发送"; $("#gSend").classList.toggle("is-stop", G.busy);
+    $("#gMore").disabled = G.busy; $("#gInput").placeholder = G.busy ? "她们在说话…点「停止」可以打断" : "说点什么，@名字 点名…";
+  }
+  function gAts(text, self) {
+    var out = [];
+    gMembers(G.g).forEach(function (c) { var i = text.indexOf("@" + c.name); if (i >= 0 && String(c.id) !== String(self)) out.push({ id: c.id, i: i }); });
+    return out.sort(function (a, b) { return a.i - b.i; }).map(function (x) { return x.id; });
+  }
+  function gPid(id) { return "astral-" + String(id).padStart(2, "0"); }
+  function gPick(n, not) {
+    var ids = G.g.members.filter(function (id) { return not.indexOf(id) < 0; });
+    for (var i = ids.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = ids[i]; ids[i] = ids[j]; ids[j] = t; }
+    return ids.slice(0, n);
+  }
+  async function gSpeak(id) {
+    var c = BY_ID[id], mv = $("#gModel").value.split("\u0001"), out = "", err = "";
+    var p = gBubble(id, ""), row = p.parentNode.parentNode; p.classList.add("typing"); p.textContent = c.name + " 正在输入…"; p.classList.add("is-wait");
+    var strip = new RegExp("^\\s*(?:【\\s*" + c.name + "\\s*】|" + c.name + "\\s*[:：])\\s*");
+    G.ctrl = new AbortController();
+    try {
+      var hist = G.g.hist.map(function (m) { return { who: m.who === "user" ? "user" : gPid(m.who), text: m.text }; });
+      var r = await fetch("/astral-summon/api/chat", { method: "POST", signal: G.ctrl.signal, headers: { "content-type": "application/json", "x-astral-summon": "1" },
+        body: JSON.stringify({ presetId: gPid(id), group: G.g.members.map(gPid), history: hist, text: "", provider: mv[1] ? mv[0] : undefined, model: mv[1] || undefined }) });
+      if (!r.ok) { var j = {}; try { j = await r.json(); } catch (e) {} throw new Error(j.error || ("HTTP " + r.status)); }
+      var rd = r.body.getReader(), dec = new TextDecoder(), buf = "";
+      for (;;) {
+        var x = await rd.read(); if (x.done) break;
+        buf += dec.decode(x.value, { stream: true });
+        var lines = buf.split("\n"); buf = lines.pop();
+        lines.forEach(function (ln) { if (!ln) return; var o = JSON.parse(ln); if (o.t) out += o.t; if (o.r != null) out = o.r; if (o.error) err = o.error;
+          var shown = out.replace(strip, "").trim(); if (shown) { p.classList.remove("is-wait"); gText(p, shown); $("#gList").scrollTop = 1e9; } });
+      }
+    } catch (e) { if (e.name !== "AbortError") err = e.message || String(e); }
+    G.ctrl = null; p.classList.remove("typing"); out = out.replace(strip, "").trim();
+    if (out) { G.g.hist.push({ who: id, text: out }); gPersist(); } else row.remove();
+    if (err && !G.stop) gBubble(id, err, "msg--err");
+    return { out: out, err: err };
+  }
+  async function gRound(userText) {
+    if (G.busy) return; G.busy = true; G.stop = false; gBtns();
+    var queue, replies = 0, per = {}, pair = {}, spoke = [];
+    if (userText) {
+      G.g.hist.push({ who: "user", text: userText }); gPersist(); gBubble("user", userText);
+      queue = gAts(userText, null);
+      if (!queue.length) queue = gPick(G.g.members.length > 2 && Math.random() < 0.5 ? 2 : 1, []);
+    } else {
+      var last = G.g.hist.length ? G.g.hist[G.g.hist.length - 1].who : null;
+      queue = gPick(1, last != null && last !== "user" ? [last] : []);
+    }
+    while (queue.length && replies < MAX_REPLIES && !G.stop) {
+      var id = queue.shift(); if ((per[id] || 0) >= PER_CHAR) continue;
+      var r = await gSpeak(id); if (G.stop || r.err || !r.out) break;
+      replies++; per[id] = (per[id] || 0) + 1; spoke.push(id);
+      gAts(r.out, id).slice(0, 1).forEach(function (t) {
+        var k = [id, t].sort().join("-");
+        if ((pair[k] || 0) < PAIR_MAX && (per[t] || 0) < PER_CHAR && queue.indexOf(t) < 0) { pair[k] = (pair[k] || 0) + 1; queue.unshift(t); }
+      });
+    }
+    G.busy = false; G.stop = false; gBtns();
+    if (userText && replies > 0) roundReward(spoke.map(function (i) { return BY_ID[i].name; }).filter(function (n, i, a) { return a.indexOf(n) === i; }).join("、"));
+  }
+  function gStop() { if (!G.busy) return; G.stop = true; if (G.ctrl) G.ctrl.abort(); }
+  $("#gpClose").addEventListener("click", function () { $("#gpick").classList.remove("is-on"); });
+  $("#gpGo").addEventListener("click", function () {
+    var ids = Object.keys(G.pick).map(Number); if (ids.length < 2) return;
+    var g = { id: "g" + Date.now().toString(36), members: ids, hist: [] }; var a = gStore(); a.push(g); gSave(a);
+    $("#gpick").classList.remove("is-on"); gOpen(g);
+  });
+  $("#gBack").addEventListener("click", function () { gStop(); $("#gchat").classList.remove("is-on"); });
+  $("#gClear").addEventListener("click", function () { if (G.busy || !confirm("清空这个群的聊天记录？")) return; G.g.hist = []; gPersist(); gRender(); });
+  $("#gModel").addEventListener("change", function () { localStorage.setItem(MODEL_KEY, this.value); $("#chatModel").value = this.value; });
+  $("#gMore").addEventListener("click", function () { if (!G.busy && G.g.hist.length) gRound(""); else if (!G.g.hist.length) toast("先说句话开个头吧"); });
+  $("#gForm").addEventListener("submit", function (e) { e.preventDefault(); if (G.busy) { gStop(); return; } var t = $("#gInput").value.trim(); if (!t) return; $("#gInput").value = ""; gRound(t); });
+  $("#gInput").addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); $("#gForm").requestSubmit(); } });
   function closeViewer() { $("#viewer").classList.remove("is-on"); $("#vTilt").innerHTML = ""; V.card = null; }
   function flip() {
     if (!V.card) return;
@@ -1304,7 +1572,7 @@ window.CARDS = [
     saveGame();
     $("#stone").textContent = S.stone;
     var owned = CARDS.filter(function (c) { return listed(c) && S.owned[c.id]; }).length;
-    $("#wishInfo").textContent = "已收集 " + owned + " / 30 · 累计 " + S.total + " 抽 · 再抽 " + Math.max(1, PITY - S.since) + " 次必出 SSR";
+    $("#wishInfo").textContent = "已收集 " + owned + " / " + CARDS.filter(listed).length + " · 累计 " + S.total + " 抽 · 再抽 " + Math.max(1, PITY - S.since) + " 次必出 SSR";
     $$("#showRow .x-show__item").forEach(function (it) { it.classList.toggle("is-locked", !S.owned[it.getAttribute("data-id")]); });
   }
   /* ---------- featured showcase ---------- */
@@ -1362,7 +1630,8 @@ window.CARDS = [
   function renderDex() {
     var v = $("#v-dex"); v.innerHTML = "";
     var owned = CARDS.filter(function (c) { return listed(c) && S.owned[c.id]; }).length;
-    var h = document.createElement("h2"); h.className = "sec"; h.textContent = "图鉴 · 已收集 " + owned + " / 30"; v.appendChild(h);
+    var h = document.createElement("h2"); h.className = "sec"; h.textContent = "图鉴 · 已收集 " + owned + " / " + CARDS.filter(listed).length; v.appendChild(h);
+    if (location.pathname.indexOf("/astral-summon") === 0) { var gb = document.createElement("button"); gb.type = "button"; gb.className = "btn btn--gold gbtn"; gb.id = "gEntry"; gb.textContent = "👥 群聊"; gb.onclick = gOpenPick; v.appendChild(gb); }
     ORDER.forEach(function (rar) {
       var cards = POOL[rar].filter(listed);
       var have = cards.filter(function (c) { return S.owned[c.id]; }).length;

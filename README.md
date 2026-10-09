@@ -5,7 +5,7 @@
 **一款 DeepSeek Harness（dsh）插件：二次元抽卡 + 和你抽到的角色聊天**
 **A DeepSeek Harness (dsh) plugin: anime gacha cards you can actually talk to**
 
-![version](https://img.shields.io/badge/version-1.0.0-7c5cff)
+![version](https://img.shields.io/badge/version-1.1.0-7c5cff)
 ![dsh](https://img.shields.io/badge/dsh-Web%20profile-1f6feb)
 ![node](https://img.shields.io/badge/node-%3E%3D20-339933)
 ![license](https://img.shields.io/badge/license-PolyForm%20Noncommercial-orange)
@@ -21,21 +21,22 @@
 ## 中文
 
 ### 这是什么
-星穹召唤是一个跑在 dsh Web 版里的抽卡小游戏。30 位原创角色，每位都有完整的人设、说话习惯和背景故事。抽到谁，就能在游戏里用聊天气泡和她聊天。
+星穹召唤是一个跑在 dsh Web 版里的抽卡小游戏。100 位角色（97 位原创，另有长乐公主、小龙女、克娄巴特拉 3 位历史与经典人物；从幻想世界、古代各国到现代都市里的老师、学生和上班族），每位都有完整的人设、说话习惯和背景故事。抽到谁，就能在游戏里用聊天气泡和她聊天。
 
 - 🎴 **抽卡**：单抽 / 十连，星轨召唤动画，SR 光柱，SSR 全屏演出（先出黑影，再露真容）。
 - 📖 **图鉴 / 记录 / 概率**：收集进度、最近 500 抽记录、公开的完整概率表。
 - 💬 **角色聊天**：只有抽到的角色才能聊；回复按句子拆成多个气泡，带角色自己的小动作。
-- 🎁 **星辉石**：开局送 16000（100 抽）；在游戏里给角色每发 2 条消息再送 160（1 抽）。
+- 👥 **群聊**：在图鉴页点「👥 群聊」，选 2～4 位已拥有的角色拉一个群。她们各自回话，用 @名字 互相搭话；你说一句，她们最多回 4 条就停下等你，随时可以点「停止」打断，也可以点「让她们继续聊」。
+- 🎁 **星辉石**：开局送 16000（100 抽）；在游戏里和角色每聊完一轮（你说一句、她回完）再送 160（1 抽），群聊同样按轮算。
 - 🔒 **不碰你的密钥**：聊天直接用你在 dsh 里已经配好的模型，插件不读取、不保存、不转发任何 API key。
 
 ### 概率
 
 | 稀有度 | 卡数 | 概率 |
 | --- | --- | --- |
-| SSR | 5 | 1% |
-| SR | 9 | 10% |
-| R | 16 | 89% |
+| SSR | 11 | 1% |
+| SR | 24 | 10% |
+| R | 45 | 89% |
 
 - 同稀有度内每张卡概率均等，单卡概率在游戏「概率」页里全部列出。
 - **SSR 保底**：连续 99 抽没出 SSR，第 100 抽必出；出了 SSR 就重新计数。
@@ -50,7 +51,7 @@ npx @deepseek-ai/dsh plugin --profile web add ./dsh-astral-summon
 npx @deepseek-ai/dsh web
 ```
 
-浏览器打开 dsh 后，点左侧边栏的「星穹召唤」开始抽卡。在已拥有角色的详情页点「💬 和她聊天」。
+浏览器打开 dsh 后，点左侧边栏的「星穹召唤」开始抽卡。在已拥有角色的详情页点「💬 和她聊天」；在图鉴页点「👥 群聊」可以拉 2～4 人的群。
 
 > 聊天用的是你在 dsh 设置里选的模型。还没配置模型的话，先在 dsh 里配好，插件这边不需要任何设置。
 
@@ -82,6 +83,8 @@ dsh-astral-summon/
 2. 把卡面放进 `game/girl_XX.jpg`，并在 `game/index.html` 的 `CARDS` 里加一条。
 3. 重新运行 `plugin add` 后重启 dsh。
 
+**稀有度**：在 `CARDS` 那一条里写 `rarity: "SSR"`、`"SR"` 或 `"R"`，人设文件里的 `rarity` 填同样的值。各稀有度的总概率固定（SSR 1% / SR 10% / R 89%），新卡会和同稀有度的卡平分这份概率。SSR 想要全屏立绘演出，还要放 `game/ssr_XX.jpg`（立绘）和 `game/ssr_XX_sil.png`（同尺寸的黑色剪影，透明底），并把卡号加进 `game/index.html` 里 `SPLASH` 那一行的数组；不加也能抽，只是走普通 SSR 演出。
+
 游戏启动时会以人设文件里的名字、头衔和自我介绍为准，所以改人设就够了。
 
 ### 已知限制
@@ -99,7 +102,7 @@ dsh-astral-summon/
 ## English
 
 ### What is it
-Astral Summon is a gacha mini-game that runs inside the dsh Web UI. It ships 30 original characters, each with a full persona, speech habits and backstory. Pull a card and you can chat with that character right inside the game.
+Astral Summon is a gacha mini-game that runs inside the dsh Web UI. It ships 100 characters (97 originals plus 3 historical / classic figures: Princess Changle, Xiaolongnü and Cleopatra), from fantasy worlds and ancient kingdoms to modern-day teachers, students and office workers, each with a full persona, speech habits and backstory. Pull a card and you can chat with that character right inside the game.
 
 - 🎴 **Pulls**: single / 10-pull, star-trail summon animation, SR light pillar, full-screen SSR reveal (silhouette first, then the art).
 - 📖 **Collection / History / Rates**: collection progress, your last 500 pulls, and a full public rate table.
@@ -111,9 +114,9 @@ Astral Summon is a gacha mini-game that runs inside the dsh Web UI. It ships 30 
 
 | Rarity | Cards | Rate |
 | --- | --- | --- |
-| SSR | 5 | 1% |
-| SR | 9 | 10% |
-| R | 16 | 89% |
+| SSR | 11 | 1% |
+| SR | 24 | 10% |
+| R | 45 | 89% |
 
 - Every card within a rarity has the same chance; per-card rates are listed on the in-game Rates page.
 - **SSR pity**: if 99 pulls in a row give no SSR, the 100th pull is a guaranteed SSR. The counter resets on any SSR.
@@ -128,7 +131,7 @@ npx @deepseek-ai/dsh plugin --profile web add ./dsh-astral-summon
 npx @deepseek-ai/dsh web
 ```
 
-Open dsh in your browser and click **星穹召唤** in the left sidebar. To chat, open a card you own and press **💬 和她聊天**.
+Open dsh in your browser and click **星穹召唤** in the left sidebar. To chat, open a card you own and press **💬 和她聊天**; for a group chat with 2–4 of your cards, press **👥 群聊** on the collection page.
 
 > Chat uses the model selected in your dsh settings. If you have not set one up yet, do that in dsh first; the plugin itself needs no configuration.
 
@@ -159,6 +162,8 @@ dsh-astral-summon/
 1. Write `personas/astral-XX.json` following `personas/SCHEMA.md` (XX = two-digit card id).
 2. Add the card art as `game/girl_XX.jpg` and an entry to `CARDS` in `game/index.html`.
 3. Re-run `plugin add` and restart dsh.
+
+**Rarity**: set `rarity: "SSR"`, `"SR"` or `"R"` in the `CARDS` entry and use the same value in the persona file. Each rarity's total rate is fixed (SSR 1% / SR 10% / R 89%), and cards of the same rarity split it evenly. For the full-screen SSR splash, also add `game/ssr_XX.jpg` (the art) and `game/ssr_XX_sil.png` (a same-size black silhouette on transparency), and add the card id to the `SPLASH` array in `game/index.html`; without them the card still works with the standard SSR reveal.
 
 On load the game takes each card's name, title and intro from its persona file, so editing the persona is enough.
 
