@@ -58,6 +58,9 @@ export function personaPrompt(p, lite = false) {
     const a = p.affection_stages
     L.push(`【和玩家的关系】${p.relationship_to_user || ''}\n刚认识：${a.stranger || ''}\n熟了以后：${a.friend || ''}\n很亲近以后：${a.close || ''}\n根据聊天里的实际相处慢慢变化，不要一上来就很亲密。`)
   }
+  // Romance: no affection meter; the model judges from the chat itself. Cards without the field
+  // (students, young-looking cards, 小龙女) never get it.
+  if (p.romance) L.push(`【动心以后】${p.romance}\n不记好感数值，凭聊过的内容判断：聊得久了、玩家认真示好或表白、她自己认定了，就自然变成恋人，会牵手、抱、亲亲，会吃醋、黏人、说亲昵话。亲密只写到亲吻和拥抱，再往下就岔开或一笔带过。还没到那一步时别突然很亲密。`)
   if (p.scenario) L.push(`【当前场景】${p.scenario}`)
   if (list(p.topics).length) L.push(`【会主动聊的话题】${join(p.topics, '；')}`)
   if (p.self_intro) L.push(`【初次见面时的自我介绍】${p.self_intro}`)

@@ -380,12 +380,25 @@
       /* bottom nav */
       .tabbar {
         position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
-        display: grid; grid-template-columns: repeat(4, 1fr); max-width: 430px; margin: 0 auto;
+        display: grid; grid-template-columns: repeat(5, 1fr); max-width: 430px; margin: 0 auto;
         background: #070b1ce6; border-top: 1px solid #f6d37a33; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
         padding-bottom: env(safe-area-inset-bottom, 0px);
       }
       .tabbar button { appearance: none; background: none; border: 0; color: var(--ink-2); font-family: inherit; font-size: 12px; min-height: 58px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer; }
       .tabbar button i { font-style: normal; font-size: 18px; line-height: 1; }
+      /* chat list (消息) */
+      .mlist { display: flex; flex-direction: column; }
+      .mrow { appearance: none; background: none; border: 0; border-bottom: 1px solid #ffffff12; color: var(--ink); font-family: inherit; text-align: left; display: flex; align-items: center; gap: 12px; padding: 10px 4px; cursor: pointer; width: 100%; }
+      .mrow:active { background: #ffffff0a; }
+      .mrow__ava { width: 46px; height: 46px; flex: none; display: grid; grid-template-columns: 1fr 1fr; gap: 1px; border-radius: 50%; overflow: hidden; background: #ffffff10; }
+      .mrow__ava img { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; }
+      .mrow__ava.is-one { grid-template-columns: 1fr; }
+      .mrow__ava.is-two img { grid-row: span 2; }
+      .mrow__mid { flex: 1; min-width: 0; }
+      .mrow__mid b { display: block; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .mrow__mid span { display: block; font-size: 13px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+      .mrow__tm { font-size: 11px; color: var(--ink-2); flex: none; align-self: flex-start; margin-top: 4px; }
+      .mempty { text-align: center; color: var(--ink-2); padding: 40px 10px; font-size: 14px; line-height: 1.7; }
       .tabbar button.is-on { color: var(--gold); text-shadow: 0 0 10px #f6d37a66; }
       .toast { position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); z-index: 90; background: #1b2350; border: 1px solid #f6d37a55; color: var(--ink); padding: 8px 16px; border-radius: 999px; font-size: 13px; opacity: 0; pointer-events: none; transition: opacity .25s; white-space: nowrap; }
       .toast.is-on { opacity: 1; }
@@ -519,6 +532,11 @@
 
       <section class="view" id="v-dex"></section>
 
+      <section class="view" id="v-msg">
+        <h2 class="sec">消息</h2>
+        <div class="panel"><div class="mlist" id="mList"></div></div>
+      </section>
+
       <section class="view" id="v-log">
         <h2 class="sec">统计</h2>
         <div class="statgrid" id="stats"></div>
@@ -540,6 +558,7 @@
     <nav class="tabbar" aria-label="主菜单">
       <button type="button" data-v="wish" class="is-on"><i>✦</i>祈愿</button>
       <button type="button" data-v="dex"><i>❖</i>图鉴</button>
+      <button type="button" data-v="msg"><i>✉</i>消息</button>
       <button type="button" data-v="log"><i>☰</i>记录</button>
       <button type="button" data-v="rate"><i>%</i>概率</button>
     </nav>
@@ -1325,6 +1344,10 @@ window.CARDS = [
   }
   function chatStore() { try { return JSON.parse(localStorage.getItem(CHAT_KEY)) || {}; } catch (e) { return {}; } }
   function chatSave(all) { try { localStorage.setItem(CHAT_KEY, JSON.stringify(all)); } catch (e) {} }
+  // last-activity time per chat (single: preset id, group: group id), kept apart so it never rides in requests
+  var CHATAT_KEY = "astral_summon_chat_at_v1";
+  function atStore() { try { return JSON.parse(localStorage.getItem(CHATAT_KEY)) || {}; } catch (e) { return {}; } }
+  function touch(k) { var a = atStore(); a[k] = Date.now(); try { localStorage.setItem(CHATAT_KEY, JSON.stringify(a)); } catch (e) {} }
   function pid(c) { return "astral-" + String(c.id).padStart(2, "0"); }
   function bubble(role, text, cls) {
     var m = document.createElement("div"); m.className = "msg msg--" + (role === "user" ? "me" : "her") + (cls ? " " + cls : "");
@@ -1357,7 +1380,7 @@ window.CARDS = [
     renderChat(); chatHint(); loadModels(); $("#chat").classList.add("is-on");
     setTimeout(function () { $("#chatInput").focus(); }, 50);
   }
-  function closeChat() { if (C.ctrl) C.ctrl.abort(); $("#chat").classList.remove("is-on"); }
+  function closeChat() { if (C.ctrl) C.ctrl.abort(); $("#chat").classList.remove("is-on"); renderMsg(); }
   async function sendChat(text) {
     if (C.busy || !text) return;
     var id = pid(C.card), all = chatStore(), hist = all[id] || [];
@@ -1383,14 +1406,14 @@ window.CARDS = [
       }
     } catch (e) { if (e.name !== "AbortError") err = e.message || String(e); }
     ps.forEach(function (x) { x.classList.remove("typing"); });
-    if (out) { hist.push({ role: "user", text: text }, { role: "her", text: out }); all[id] = hist.length > 200 ? hist.slice(Math.floor((hist.length - 160) / 20) * 20) : hist; /* trim in steps of 20 (cache-friendly window) */ chatSave(all);
+    if (out) { hist.push({ role: "user", text: text }, { role: "her", text: out }); all[id] = hist.length > 200 ? hist.slice(Math.floor((hist.length - 160) / 20) * 20) : hist; /* trim in steps of 20 (cache-friendly window) */ chatSave(all); touch(id);
       if (!err) roundReward(C.card.name);  // reward only for a finished reply
     }
     if (err) { if (!out) ps.forEach(function (x) { x.parentNode.remove(); }); bubble("her", err, "msg--err"); }
     C.busy = false; C.ctrl = null; $("#chatSend").textContent = "发送";
   }
   $("#chatBack").addEventListener("click", closeChat);
-  $("#chatClear").addEventListener("click", function () { if (!confirm("清空和" + C.card.name + "的聊天记录？")) return; var all = chatStore(); delete all[pid(C.card)]; chatSave(all); renderChat(); });
+  $("#chatClear").addEventListener("click", function () { if (!confirm("清空和" + C.card.name + "的聊天记录？")) return; var all = chatStore(); delete all[pid(C.card)]; chatSave(all); renderChat(); renderMsg(); });
   $("#chatModel").addEventListener("change", function () { localStorage.setItem(MODEL_KEY, this.value); });
   $("#chatForm").addEventListener("submit", function (e) { e.preventDefault(); if (C.busy) { if (C.ctrl) C.ctrl.abort(); return; } var t = $("#chatInput").value.trim(); $("#chatInput").value = ""; sendChat(t); });
   $("#chatInput").addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); $("#chatForm").requestSubmit(); } });
@@ -1402,7 +1425,7 @@ window.CARDS = [
   var G = { g: null, busy: false, stop: false, ctrl: null, pick: {} };
   function gStore() { try { var a = JSON.parse(localStorage.getItem(GROUP_KEY)); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
   function gSave(a) { try { localStorage.setItem(GROUP_KEY, JSON.stringify(a)); } catch (e) {} }
-  function gPersist() { var a = gStore(), i = a.findIndex(function (x) { return x.id === G.g.id; }); if (G.g.hist.length > 300) G.g.hist = G.g.hist.slice(Math.floor((G.g.hist.length - 240) / 20) * 20); /* trim in steps of 20 so the server window stays aligned */ if (i >= 0) a[i] = G.g; else a.push(G.g); gSave(a); }
+  function gPersist() { var a = gStore(), i = a.findIndex(function (x) { return x.id === G.g.id; }); if (G.g.hist.length > 300) G.g.hist = G.g.hist.slice(Math.floor((G.g.hist.length - 240) / 20) * 20); /* trim in steps of 20 so the server window stays aligned */ if (i >= 0) a[i] = G.g; else a.push(G.g); gSave(a); touch(G.g.id); }
   function gMembers(g) { return g.members.map(function (id) { return BY_ID[id]; }).filter(Boolean); }
   function gOpenPick() {
     if (location.pathname.indexOf("/astral-summon") !== 0) { toast("群聊只能在 dsh 里使用"); return; }
@@ -1415,7 +1438,7 @@ window.CARDS = [
       var t = document.createElement("span"); t.textContent = ms.map(function (c) { return c.name; }).join("、"); b.appendChild(t);
       b.onclick = function () { $("#gpick").classList.remove("is-on"); gOpen(g); };
       var del = document.createElement("button"); del.type = "button"; del.className = "btn btn--ghost gp__del"; del.textContent = "删除";
-      del.onclick = function () { if (!confirm("删除这个群和聊天记录？")) return; gSave(gStore().filter(function (x) { return x.id !== g.id; })); gOpenPick(); };
+      del.onclick = function () { if (!confirm("删除这个群和聊天记录？")) return; gSave(gStore().filter(function (x) { return x.id !== g.id; })); gOpenPick(); renderMsg(); };
       row.appendChild(b); row.appendChild(del); box.appendChild(row);
     });
     var grid = $("#gpCards"); grid.innerHTML = "";
@@ -1528,7 +1551,7 @@ window.CARDS = [
     var g = { id: "g" + Date.now().toString(36), members: ids, hist: [] }; var a = gStore(); a.push(g); gSave(a);
     $("#gpick").classList.remove("is-on"); gOpen(g);
   });
-  $("#gBack").addEventListener("click", function () { gStop(); $("#gchat").classList.remove("is-on"); });
+  $("#gBack").addEventListener("click", function () { gStop(); $("#gchat").classList.remove("is-on"); renderMsg(); });
   $("#gClear").addEventListener("click", function () { if (G.busy || !confirm("清空这个群的聊天记录？")) return; G.g.hist = []; gPersist(); gRender(); });
   $("#gModel").addEventListener("change", function () { localStorage.setItem(MODEL_KEY, this.value); $("#chatModel").value = this.value; });
   $("#gMore").addEventListener("click", function () { if (!G.busy && G.g.hist.length) gRound(""); else if (!G.g.hist.length) toast("先说句话开个头吧"); });
@@ -1708,7 +1731,50 @@ window.CARDS = [
       }).join("");
     }).join("");
   }
-  function renderAll() { renderTop(); renderDex(); renderLog(); renderRates(); }
+  /* ---------- 消息: every saved chat (single + group), newest first; tap to pick up where you left off ---------- */
+  function mTime(t) {
+    if (!t) return "";
+    var d = new Date(t), now = new Date(), p2 = function (n) { return String(n).padStart(2, "0"); };
+    if (d.toDateString() === now.toDateString()) return p2(d.getHours()) + ":" + p2(d.getMinutes());
+    var y = new Date(now); y.setDate(now.getDate() - 1);
+    if (d.toDateString() === y.toDateString()) return "昨天";
+    return (d.getFullYear() === now.getFullYear() ? "" : d.getFullYear() + "/") + (d.getMonth() + 1) + "/" + d.getDate();
+  }
+  function renderMsg() {
+    var box = $("#mList"); if (!box) return; box.innerHTML = "";
+    var inDsh = location.pathname.indexOf("/astral-summon") === 0;
+    var at = atStore(), all = chatStore(), rows = [];
+    CARDS.forEach(function (c) {
+      var h = all[pid(c)]; if (!h || !h.length || !S.owned[c.id]) return;
+      var last = h[h.length - 1];
+      rows.push({ t: at[pid(c)] || 0, imgs: [c.img], name: c.name, line: last.text, go: function () { openChat(c); } });
+    });
+    gStore().forEach(function (g) {
+      var ms = gMembers(g); if (ms.length < 2) return;
+      var last = g.hist[g.hist.length - 1], who = last ? (last.who === "user" ? "我" : (BY_ID[last.who] || {}).name) : "";
+      rows.push({ t: at[g.id] || 0, imgs: ms.map(function (c) { return c.img; }), name: ms.map(function (c) { return c.name; }).join("、"), line: last ? who + "：" + last.text : "还没说话", go: function () { gOpen(g); } });
+    });
+    rows.sort(function (a, b) { return b.t - a.t; });
+    if (!rows.length) {
+      var e = document.createElement("div"); e.className = "mempty";
+      e.textContent = inDsh ? "还没有聊天。去图鉴点开一位已拥有的角色，点「💬 和她聊天」，聊过的都会出现在这里。" : "聊天只能在 dsh 里使用。";
+      box.appendChild(e);
+    }
+    rows.forEach(function (r) {
+      var b = document.createElement("button"); b.type = "button"; b.className = "mrow";
+      var av = document.createElement("span"); av.className = "mrow__ava" + (r.imgs.length === 1 ? " is-one" : r.imgs.length === 2 ? " is-two" : "");
+      r.imgs.slice(0, 4).forEach(function (src) { var im = document.createElement("img"); im.src = src; im.alt = ""; im.loading = "lazy"; av.appendChild(im); });
+      var mid = document.createElement("span"); mid.className = "mrow__mid";
+      var n = document.createElement("b"); n.textContent = r.name; mid.appendChild(n);
+      var l = document.createElement("span"); l.textContent = String(r.line || "").replace(/\s+/g, " "); mid.appendChild(l);
+      var tm = document.createElement("span"); tm.className = "mrow__tm"; tm.textContent = mTime(r.t);
+      b.appendChild(av); b.appendChild(mid); b.appendChild(tm);
+      b.onclick = function () { if (!inDsh) { toast("聊天只能在 dsh 里使用"); return; } r.go(); };
+      box.appendChild(b);
+    });
+    if (inDsh) { var gb = document.createElement("button"); gb.type = "button"; gb.className = "btn btn--gold gbtn"; gb.textContent = "👥 新建群聊"; gb.style.marginTop = "12px"; gb.onclick = gOpenPick; box.appendChild(gb); }
+  }
+  function renderAll() { renderTop(); renderDex(); renderLog(); renderRates(); renderMsg(); }
 
   var current = "wish";
   $$(".tabbar button").forEach(function (b) {
@@ -1724,6 +1790,7 @@ window.CARDS = [
       current = b.getAttribute("data-v");
       $$(".tabbar button").forEach(function (x) { x.classList.toggle("is-on", x === b); });
       $$(".view").forEach(function (v) { v.classList.toggle("is-on", v.id === "v-" + current); });
+      if (current === "msg") renderMsg();
       window.scrollTo(0, 0);
     });
   });
